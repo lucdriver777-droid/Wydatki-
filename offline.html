@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Tryb offline – Wydatki miesięczne</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(180deg, #f2f8ff 0%, #e8f1ff 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    color: #0f172a;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .icon {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 25px;
+    background: url('icon-192.png') center/contain no-repeat;
+    animation: pulse 3s infinite ease-in-out;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  h1 {
+    font-size: 1.6em;
+    margin-bottom: 0.4em;
+    color: #0e7490;
+  }
+
+  p {
+    color: #475569;
+    max-width: 320px;
+    line-height: 1.5;
+    margin-bottom: 25px;
+  }
+
+  button {
+    background-color: #0ea5e9;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+  }
+
+  button:hover {
+    background-color: #0284c7;
+    transform: scale(1.03);
+  }
+
+  footer {
+    position: absolute;
+    bottom: 10px;
+    font-size: 12px;
+    color: #64748b;
+  }
+</style>
+</head>
+
+<body>
+  <div class="icon"></div>
+  <h1>🚫 Brak połączenia z siecią</h1>
+  <p>Dane są zapisane lokalnie. Po odzyskaniu połączenia możesz kontynuować pracę w aplikacji.</p>
+  <button onclick="location.reload()">🔄 Spróbuj ponownie</button>
+
+  <footer>LS & GPT • Tryb offline</footer>
+</body>
+</html>
