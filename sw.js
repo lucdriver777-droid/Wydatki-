@@ -1,59 +1,40 @@
-// --- Service Worker dla aplikacji "Wydatki miesięczne" ---
-// Wersja: 1.0 (2025-10-06)
+const CACHE_NAME = 'wydatki-cache-v3';
+const OFFLINE_URL = './offline.html';
 
-const CACHE_NAME = "wydatki-cache-v1";
-const URLS_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./favicon.ico"
+const urlsToCache = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  OFFLINE_URL
 ];
 
-// Instalacja (pierwsze uruchomienie)
-self.addEventListener("install", event => {
+// Instalacja i cache plików
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log("📦 Dodawanie do cache...");
-      return cache.addAll(URLS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// Aktywacja (czyści stare wersje cache)
-self.addEventListener("activate", event => {
+// Aktualizacja cache (usuwa stare wersje)
+self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log("🧹 Usuwanie starego cache:", key);
-            return caches.delete(key);
-          }
-        })
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
-  self.clients.claim();
 });
 
-// Przechwytywanie zapytań (tryb offline)
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      // Jeśli plik jest w cache → zwracamy
-      if (response) return response;
-      // Jeśli nie → pobieramy z sieci i zapisujemy
-      return fetch(event.request)
-        .then(res => {
-          // Pomijamy żądania z innych domen
-          if (!event.request.url.startsWith(self.location.origin)) return res;
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return res;
-        })
-        .catch(() => caches.match("./index.html")); // awaryjnie ładuje stronę offline
-    })
-  );
+// Obsługa zapytań sieciowych i trybu offline
+self.addEventListener('fetch', event => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then(response => response || fetch(event.request))
+    );
+  }
 });
