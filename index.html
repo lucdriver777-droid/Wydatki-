@@ -13,9 +13,7 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
-    /* Ekran: nowocześnie i jasno */
     :root{
-      --bg: #f4f6fb;
       --card: #ffffff;
       --border: #e6e8f0;
       --text: #0f172a;
@@ -25,9 +23,8 @@
       --shadow: 0 6px 20px rgba(15,23,42,.06);
       --fuel-bg: #eef6ff;      /* delikatny błękit */
       --other-bg: #f5f7fa;     /* jasny szary */
-      --today: #fff7cc;        /* miękka żółć dla "dziś" (tylko UI) */
+      --today: #fff7cc;        /* miękka żółć dla "dziś" (UI) */
     }
-    html,body{ height:100%; }
     body{
       margin:0; background:linear-gradient(180deg,#f7f9ff 0%, #eef2ff 100%);
       color:var(--text); font-family:system-ui, Segoe UI, Roboto, sans-serif;
@@ -66,18 +63,23 @@
     .muted{ color:var(--muted); }
     #appFooterFull{ margin-top:8px; text-align:center; font-size:12px; color:var(--muted); }
 
-    /* PDF: klasycznie, czarno-biało, Times */
+    /* Wydruk PDF – klasycznie */
     @media print{
       body{ font-family:"Times New Roman", Times, serif; font-size:11px; background:#fff; }
       .no-print{ display:none !important; }
       .wrap{ max-width:auto; margin:0; padding:0; }
       .section, .toolbar{ box-shadow:none; border:none; background:#fff; }
       table th, table td{ padding:2px 3px; font-size:10px; background:#fff !important; }
-      tr.today td{ background:#fff !important; } /* w PDF bez koloru dla 'dzisiaj' */
+      tr.today td{ background:#fff !important; }
       #appFooterFull{ display:none; }
       #pdfFooter{ display:block; text-align:center; font-size:10px; padding-top:6px; }
+      /* Drukujemy scaloną tabelę PDF */
+      #printCombinedWrap{ display:block !important; }
       @page{ size:A4 portrait; margin:8mm; }
     }
+
+    /* domyślnie ukryte – pokazujemy tylko w trybie wydruku */
+    #printCombinedWrap{ display:none; }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -105,12 +107,14 @@
     </label>
   </div>
 
+  <!-- Nagłówek, wspólny dla UI i PDF -->
   <div class="section" id="headerPrint">
     <h2 style="text-align:center;margin-top:0">Podsumowanie wydatków – <span id="headerMonth"></span> <span id="headerYear"></span></h2>
     <div style="text-align:center" class="small">Imię i nazwisko: <span id="headerName" class="muted">................................................</span></div>
   </div>
 
-  <div class="section fuel">
+  <!-- Sekcja PALIWO (UI) -->
+  <div class="section fuel no-print-off">
     <div class="no-print" style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
       <h3 style="margin:0; flex:1;"><span class="icon">⛽</span>I. Koszty paliwa</h3>
       <button class="btn" id="addFuel">➕ Dodaj tankowanie</button>
@@ -129,7 +133,8 @@
     </table>
   </div>
 
-  <div class="section other">
+  <!-- Sekcja INNE (UI) -->
+  <div class="section other no-print-off">
     <div class="no-print" style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
       <h3 style="margin:0; flex:1;"><span class="icon">🧾</span>II. Koszty inne</h3>
       <button class="btn" id="addOther">➕ Dodaj koszt</button>
@@ -144,6 +149,24 @@
         </tr>
       </thead>
       <tbody id="otherBody"></tbody>
+    </table>
+  </div>
+
+  <!-- SCALONA TABELA TYLKO DO PDF -->
+  <div id="printCombinedWrap" class="section">
+    <table id="printCombinedTable">
+      <thead>
+        <tr>
+          <th style="width:60px">Dzień</th>
+          <th>Miejsce tankowania</th>
+          <th style="width:100px">Litry</th>
+          <th>Nazwa kosztu</th>
+          <th style="width:120px">Kwota (PLN)</th>
+        </tr>
+      </thead>
+      <tbody id="printCombinedBody">
+        <!-- wypełnia JS tuż przed drukiem -->
+      </tbody>
     </table>
   </div>
 
@@ -186,10 +209,7 @@
     const now = new Date();
     return (state.year === now.getFullYear() && state.month === now.getMonth() && Number(day) === now.getDate());
   }
-
-  function sortByDay(arr, field="day"){
-    arr.sort((a,b)=>(Number(a[field]||0) - Number(b[field]||0)));
-  }
+  function sortByDay(arr, field="day"){ arr.sort((a,b)=>(Number(a[field]||0) - Number(b[field]||0))); }
 
   function renderHeader(){
     const months = ["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
@@ -221,8 +241,7 @@
         <td class="no-print"><button class="btn" data-remove="fuel" data-idx="${i}">🗑</button></td>
       `;
       fuelBody.appendChild(tr);
-      const sel = tr.querySelector('select');
-      sel.value = r.day ?? "";
+      const sel = tr.querySelector('select'); sel.value = r.day ?? "";
     });
   }
 
@@ -248,8 +267,7 @@
         <td class="no-print"><button class="btn" data-remove="other" data-idx="${i}">🗑</button></td>
       `;
       otherBody.appendChild(tr);
-      const sel = tr.querySelector('select');
-      sel.value = r.day ?? "";
+      const sel = tr.querySelector('select'); sel.value = r.day ?? "";
     });
   }
 
@@ -262,37 +280,32 @@
     renderOther();
   }
 
-  // ====== ZDARZENIA ======
+  // ====== ZDARZENIA (UI) ======
   document.getElementById('addFuel').addEventListener('click', ()=>{
     state.fuel.push({day:"", place:"", liters:"", amount:""});
     saveState(); renderFuel();
   });
-
   document.getElementById('addOther').addEventListener('click', ()=>{
     state.other.push({day:"", name:"", amount:""});
     saveState(); renderOther();
   });
 
-  // Edycja komórek (input/select)
   document.addEventListener('input', (e)=>{
     const t = e.target;
-    const { type, field, idx } = t.dataset;
+    const { type, field, idx } = t.dataset || {};
     if(!type || field===undefined || idx===undefined) return;
 
     if(field === "day"){
       const val = t.value === "" ? "" : parseInt(t.value, 10);
       state[type][idx][field] = isNaN(val) ? "" : val;
       saveState();
-      // odśwież, aby zachować sortowanie i highlight
       if(type==='fuel') renderFuel(); else renderOther();
       return;
     }
-
     state[type][idx][field] = t.value;
     saveState();
   });
 
-  // Usuwanie wierszy
   document.addEventListener('click', (e)=>{
     const t = e.target;
     if(t.dataset && t.dataset.remove){
@@ -304,27 +317,17 @@
     }
   });
 
-  // Nagłówek (nazwa/miesiąc/rok)
   elName.addEventListener('input', ()=>{ state.name = elName.value; saveState(); renderHeader(); });
   elYear.addEventListener('input', ()=>{ state.year = parseInt(elYear.value,10) || new Date().getFullYear(); saveState(); renderHeader(); });
   elMonth.addEventListener('input', ()=>{ state.month = parseInt(elMonth.value,10); saveState(); renderHeader(); renderFuel(); renderOther(); });
 
-  // PDF
-  document.getElementById('btnPdf').addEventListener('click', ()=>window.print());
-
-  // Excel: jeden arkusz ze wspólną strukturą
+  // ====== EXCEL – jeden arkusz ======
   document.getElementById('btnExcel').addEventListener('click', ()=>{
     const rows = [["Typ","Dzień","Miejsce tankowania","Litry","Nazwa kosztu","Kwota (PLN)"]];
-    // paliwo
-    const fuelSorted = [...state.fuel]; sortByDay(fuelSorted,"day");
-    fuelSorted.forEach(r=>{
-      rows.push(["Paliwo", r.day ?? "", r.place ?? "", r.liters ?? "", "", r.amount ?? ""]);
-    });
-    // inne
-    const otherSorted = [...state.other]; sortByDay(otherSorted,"day");
-    otherSorted.forEach(r=>{
-      rows.push(["Inne", r.day ?? "", "", "", r.name ?? "", r.amount ?? ""]);
-    });
+    const f = [...state.fuel]; sortByDay(f,"day");
+    f.forEach(r=>rows.push(["Paliwo", r.day ?? "", r.place ?? "", r.liters ?? "", "", r.amount ?? ""]));
+    const o = [...state.other]; sortByDay(o,"day");
+    o.forEach(r=>rows.push(["Inne", r.day ?? "", "", "", r.name ?? "", r.amount ?? ""]));
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Wydatki");
@@ -332,7 +335,52 @@
     XLSX.writeFile(wb, `Wydatki_${state.year}_${m}.xlsx`);
   });
 
-  // Czyszczenie
+  // ====== PDF – scalona tabela, bez placeholderów ======
+  function buildPrintTable(){
+    const body = document.getElementById('printCombinedBody');
+    body.innerHTML = "";
+
+    // zbuduj scaloną listę
+    const combined = [];
+    const f = [...state.fuel]; sortByDay(f,"day");
+    f.forEach(r=>{
+      // tylko rzeczywiste wpisy (dzień musi być ustawiony i coś w kolumnach)
+      const hasData = (r.place?.trim() || r.liters?.trim() || r.amount?.trim());
+      if(r.day!=="" && hasData){
+        combined.push({day:r.day, place:r.place||"", liters:r.liters||"", name:"", amount:r.amount||""});
+      }
+    });
+    const o = [...state.other]; sortByDay(o,"day");
+    o.forEach(r=>{
+      const hasData = (r.name?.trim() || r.amount?.trim());
+      if(r.day!=="" && hasData){
+        combined.push({day:r.day, place:"", liters:"", name:r.name||"", amount:r.amount||""});
+      }
+    });
+
+    // sort finalny po dniu
+    combined.sort((a,b)=>Number(a.day)-Number(b.day));
+
+    // jeśli totalnie pusto – nic nie dodajemy (żadnych placeholderów)
+    combined.forEach(row=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:center">${row.day}</td>
+        <td>${row.place}</td>
+        <td style="text-align:right">${row.liters}</td>
+        <td>${row.name}</td>
+        <td style="text-align:right">${row.amount}</td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+
+  document.getElementById('btnPdf').addEventListener('click', ()=>{
+    buildPrintTable();
+    window.print();
+  });
+
+  // ====== Czyszczenie ======
   document.getElementById('btnClear').addEventListener('click', ()=>{
     if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){
       localStorage.removeItem(LS_KEY);
