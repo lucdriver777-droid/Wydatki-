@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wydatki miesięczne</title>
 
-  <!-- Ikony (użyj tych samych plików co wcześniej) -->
+  <!-- 🔽 Ikony aplikacji -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -94,11 +94,8 @@
           <th class="no-print" style="width:60px">Akcje</th>
         </tr>
       </thead>
-      <tbody id="fuelBody">
-        <!-- wiersze JS -->
-      </tbody>
+      <tbody id="fuelBody"></tbody>
     </table>
-    <div class="small muted">Wpisuj tylko dzień miesiąca (1–31). Litry i kwoty przyjmują wartości z przecinkiem lub kropką.</div>
   </div>
 
   <div class="section">
@@ -114,9 +111,7 @@
           <th class="no-print" style="width:60px">Akcje</th>
         </tr>
       </thead>
-      <tbody id="otherBody">
-        <!-- wiersze JS -->
-      </tbody>
+      <tbody id="otherBody"></tbody>
     </table>
   </div>
 
@@ -130,182 +125,90 @@
     name: "",
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
-    fuel: [],   // {day: number, place: string, liters: number, amount: number}
-    other: []   // {name: string, amount: number}
+    fuel: [],
+    other: []
   };
   let state = {...stateDefault};
 
   function saveState(){ localStorage.setItem("wydatkiState", JSON.stringify(state)); }
   function loadState(){
     const raw = localStorage.getItem("wydatkiState");
-    if(raw){
-      try { state = {...stateDefault, ...JSON.parse(raw)}; }
-      catch(e){ console.error("Błąd wczytywania", e); state = {...stateDefault}; }
-    }
+    if(raw){ try { state = {...stateDefault, ...JSON.parse(raw)}; } catch(e){ state = {...stateDefault}; } }
   }
 
-  // ====== ELEMENTY ======
-  const elName = document.getElementById('name');
-  const elYear = document.getElementById('year');
-  const elMonth = document.getElementById('month');
-  const fuelBody = document.getElementById('fuelBody');
-  const otherBody = document.getElementById('otherBody');
+  const elName=document.getElementById('name'), elYear=document.getElementById('year'), elMonth=document.getElementById('month');
+  const fuelBody=document.getElementById('fuelBody'), otherBody=document.getElementById('otherBody');
 
-  // ====== RYSOWANIE ======
-  function fmtNum(n){
-    if(n===undefined || n===null || n==="") return "";
-    const num = typeof n === "number" ? n : parseFloat(String(n).replace(",", "."));
-    if(isNaN(num)) return "";
-    return num.toFixed(2).replace(".", ",");
-  }
+  function fmtNum(n){ if(n===""||n==null)return"";const num=parseFloat(String(n).replace(",","."));
+    return isNaN(num)?"":num.toFixed(2).replace(".",","); }
 
   function renderHeader(){
-    document.getElementById('headerMonth').textContent =
-      ["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"][state.month];
-    document.getElementById('headerYear').textContent = state.year;
-    document.getElementById('headerName').textContent = state.name || "................................................";
+    const m=["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
+    document.getElementById('headerMonth').textContent=m[state.month];
+    document.getElementById('headerYear').textContent=state.year;
+    document.getElementById('headerName').textContent=state.name||"................................................";
   }
 
   function renderFuel(){
-    fuelBody.innerHTML = "";
-    state.fuel.forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="right"><input type="number" min="1" max="31" value="${row.day ?? ""}" data-idx="${idx}" data-field="day" data-type="fuel"></td>
-        <td><input type="text" value="${row.place ?? ""}" data-idx="${idx}" data-field="place" data-type="fuel"></td>
-        <td class="right"><input type="text" value="${row.liters ?? ""}" data-idx="${idx}" data-field="liters" data-type="fuel"></td>
-        <td class="right"><input type="text" value="${row.amount ?? ""}" data-idx="${idx}" data-field="amount" data-type="fuel"></td>
-        <td class="actions no-print"><button class="btn" data-remove="fuel" data-idx="${idx}">🗑</button></td>
-      `;
-      fuelBody.appendChild(tr);
-    });
-    if(state.fuel.length===0){
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj tankowanie”.</td>`;
-      fuelBody.appendChild(tr);
-    }
+    fuelBody.innerHTML="";
+    if(state.fuel.length===0){ fuelBody.innerHTML='<tr><td colspan="5" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj tankowanie”.</td></tr>'; return; }
+    state.fuel.forEach((r,i)=>fuelBody.insertAdjacentHTML('beforeend',`
+      <tr>
+        <td><input type="number" value="${r.day??''}" data-idx="${i}" data-type="fuel" data-field="day"></td>
+        <td><input type="text" value="${r.place??''}" data-idx="${i}" data-type="fuel" data-field="place"></td>
+        <td><input type="text" value="${r.liters??''}" data-idx="${i}" data-type="fuel" data-field="liters" class="right"></td>
+        <td><input type="text" value="${r.amount??''}" data-idx="${i}" data-type="fuel" data-field="amount" class="right"></td>
+        <td class="no-print"><button class="btn" data-remove="fuel" data-idx="${i}">🗑</button></td>
+      </tr>`));
   }
 
   function renderOther(){
-    otherBody.innerHTML = "";
-    state.other.forEach((row, idx) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input type="text" value="${row.name ?? ""}" data-idx="${idx}" data-field="name" data-type="other"></td>
-        <td class="right"><input type="text" value="${row.amount ?? ""}" data-idx="${idx}" data-field="amount" data-type="other"></td>
-        <td class="actions no-print"><button class="btn" data-remove="other" data-idx="${idx}">🗑</button></td>
-      `;
-      otherBody.appendChild(tr);
-    });
-    if(state.other.length===0){
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="3" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj koszt”.</td>`;
-      otherBody.appendChild(tr);
-    }
+    otherBody.innerHTML="";
+    if(state.other.length===0){ otherBody.innerHTML='<tr><td colspan="3" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj koszt”.</td></tr>'; return; }
+    state.other.forEach((r,i)=>otherBody.insertAdjacentHTML('beforeend',`
+      <tr>
+        <td><input type="text" value="${r.name??''}" data-idx="${i}" data-type="other" data-field="name"></td>
+        <td><input type="text" value="${r.amount??''}" data-idx="${i}" data-type="other" data-field="amount" class="right"></td>
+        <td class="no-print"><button class="btn" data-remove="other" data-idx="${i}">🗑</button></td>
+      </tr>`));
   }
 
-  function renderAll(){
-    elName.value = state.name || "";
-    elYear.value = state.year;
-    elMonth.value = state.month;
-    renderHeader();
-    renderFuel();
-    renderOther();
-  }
+  function renderAll(){ elName.value=state.name; elYear.value=state.year; elMonth.value=state.month; renderHeader(); renderFuel(); renderOther(); }
 
-  // ====== ZDARZENIA INTERFEJSU ======
-  document.getElementById('addFuel').addEventListener('click', ()=>{
-    state.fuel.push({day:"", place:"", liters:"", amount:""});
-    saveState(); renderFuel();
-  });
-
-  document.getElementById('addOther').addEventListener('click', ()=>{
-    state.other.push({name:"", amount:""});
-    saveState(); renderOther();
-  });
-
-  // Delegacja zdarzeń dla inputów tabel
-  document.addEventListener('input', (e)=>{
-    const t = e.target;
-    const type = t.dataset.type;
-    const field = t.dataset.field;
-    const idx = t.dataset.idx;
-    if(type === 'fuel' && field && idx !== undefined){
-      state.fuel[idx][field] = t.value;
-      saveState();
-    }
-    if(type === 'other' && field && idx !== undefined){
-      state.other[idx][field] = t.value;
-      saveState();
-    }
-  });
-
-  // Usuwanie wierszy
-  document.addEventListener('click', (e)=>{
-    const t = e.target;
-    if(t.dataset && t.dataset.remove === 'fuel'){
-      const i = parseInt(t.dataset.idx,10);
-      state.fuel.splice(i,1);
-      saveState(); renderFuel();
-    }
-    if(t.dataset && t.dataset.remove === 'other'){
-      const i = parseInt(t.dataset.idx,10);
-      state.other.splice(i,1);
-      saveState(); renderOther();
-    }
-  });
-
-  // Nagłówek (nazwa/miesiąc/rok)
-  elName.addEventListener('input', ()=>{ state.name = elName.value; saveState(); renderHeader(); });
-  elYear.addEventListener('input', ()=>{ state.year = parseInt(elYear.value,10) || new Date().getFullYear(); saveState(); renderHeader(); });
-  elMonth.addEventListener('input', ()=>{ state.month = parseInt(elMonth.value,10); saveState(); renderHeader(); });
-
-  // PDF
-  document.getElementById('btnPdf').addEventListener('click', ()=>window.print());
-
-  // Excel
-  document.getElementById('btnExcel').addEventListener('click', ()=>{
-    const wb = XLSX.utils.book_new();
-    // Paliwo
-    const fuelRows = [["Dzień","Miejsce tankowania","Litry","Kwota (PLN)"]];
-    state.fuel.forEach(r=>{
-      fuelRows.push([r.day, r.place, r.liters, r.amount]);
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(fuelRows), "Paliwo");
-    // Inne
-    const otherRows = [["Nazwa","Kwota (PLN)"]];
-    state.other.forEach(r=>{
-      otherRows.push([r.name, r.amount]);
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(otherRows), "Koszty inne");
-    // Zapis
-    const m = (state.month+1).toString().padStart(2,'0');
-    XLSX.writeFile(wb, `Wydatki_${state.year}_${m}.xlsx`);
-  });
-
-  // Czyszczenie
-  document.getElementById('btnClear').addEventListener('click', ()=>{
-    if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){
-      localStorage.removeItem("wydatkiState");
-      state = {...stateDefault};
-      renderAll();
-    }
-  });
-
-  // Start
-  (function start(){
-    loadState();
-    renderAll();
-    const d=new Date();
-    document.getElementById("genDate").textContent = `Wygenerowano: ${d.toLocaleDateString("pl-PL",{year:"numeric",month:"2-digit",day:"2-digit"})} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;
-  })();
+  document.getElementById('addFuel').onclick=()=>{state.fuel.push({day:"",place:"",liters:"",amount:""});saveState();renderFuel();};
+  document.getElementById('addOther').onclick=()=>{state.other.push({name:"",amount:""});saveState();renderOther();};
+  document.addEventListener('input',e=>{
+    const t=e.target;const{type,field,idx}=t.dataset;
+    if(type&&field&&idx!==undefined){
+      state[type][idx][field]=t.value;saveState();
+    }});
+  document.addEventListener('click',e=>{
+    const t=e.target;if(t.dataset.remove){
+      state[t.dataset.remove].splice(parseInt(t.dataset.idx),1);saveState();
+      if(t.dataset.remove==='fuel')renderFuel();else renderOther();
+    }});
+  elName.oninput=()=>{state.name=elName.value;saveState();renderHeader();};
+  elYear.oninput=()=>{state.year=parseInt(elYear.value)||new Date().getFullYear();saveState();renderHeader();};
+  elMonth.oninput=()=>{state.month=parseInt(elMonth.value);saveState();renderHeader();};
+  document.getElementById('btnPdf').onclick=()=>window.print();
+  document.getElementById('btnExcel').onclick=()=>{
+    const wb=XLSX.utils.book_new();
+    const fuel=[["Dzień","Miejsce","Litry","Kwota"]];
+    state.fuel.forEach(r=>fuel.push([r.day,r.place,r.liters,r.amount]));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(fuel),"Paliwo");
+    const other=[["Nazwa","Kwota"]];
+    state.other.forEach(r=>other.push([r.name,r.amount]));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(other),"Koszty inne");
+    XLSX.writeFile(wb,`Wydatki_${state.year}_${String(state.month+1).padStart(2,'0')}.xlsx`);
+  };
+  document.getElementById('btnClear').onclick=()=>{if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){localStorage.removeItem("wydatkiState");state={...stateDefault};renderAll();}};
+  (function start(){loadState();renderAll();const d=new Date();document.getElementById("genDate").textContent=`Wygenerowano: ${d.toLocaleDateString("pl-PL",{year:"numeric",month:"2-digit",day:"2-digit"})} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;})();
 </script>
 
-<!-- Rejestracja service workera (PWA jak w poprzedniej apce) -->
+<!-- Service Worker -->
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("Service Worker zarejestrowany"));
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>console.log("Service Worker zarejestrowany"));
 }
 </script>
 </body>
