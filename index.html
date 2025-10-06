@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wydatki miesięczne</title>
+
+  <!-- Ikony (użyj tych samych plików co wcześniej) -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body { margin:0; font-family:"Times New Roman", Times, serif; background:#f7f7fb; color:#111; }
+    .wrap { max-width:980px; margin:24px auto; padding:0 16px; }
+    .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    .toolbar .spacer { flex:1; }
+    .btn { padding:6px 10px; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-size:13px; background:#fff; }
+    .btn.primary { background:#0ea5e9; border-color:#0ea5e9; color:#fff; }
+    .btn.ok { background:#16a34a; border-color:#16a34a; color:#fff; }
+    .section { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:14px; }
+    .controls label { margin-right:8px; display:inline-flex; align-items:center; gap:6px; }
+    .controls input, .controls select { padding:4px 6px; border:1px solid #ccc; border-radius:6px; font-size:13px; }
+    h2 { margin:6px 0 10px; font-size:18px; }
+    h3 { margin:10px 0 8px; font-size:15px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border:1px solid #ddd; padding:4px 6px; font-size:12px; }
+    th { background:#f0f0f0; text-align:center; }
+    td input { width:100%; border:1px solid #ccc; border-radius:4px; padding:3px 5px; font-size:12px; box-sizing:border-box; }
+    .right { text-align:right; }
+    .actions { text-align:right; }
+    .small { font-size:11px; color:#555; }
+    .muted { color:#666; }
+    #appFooterFull { margin-top:10px; text-align:center; font-size:11px; font-style:italic; }
+    #pdfFooter { display:none; text-align:center; font-size:10px; padding-top:4px; }
+
+    @media print {
+      body { font-size:11px; }
+      .no-print { display:none !important; }
+      table th, table td { padding:2px 3px; font-size:10px; }
+      td input { border:none; padding:0; }
+      #appFooterFull { display:none; }
+      #pdfFooter { display:block; }
+      @page { size:A4 portrait; margin:8mm; }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar no-print">
+    <h1 style="margin:0;font-size:18px">💰 Wydatki miesięczne</h1>
+    <div class="spacer"></div>
+    <button class="btn primary" id="btnPdf">Eksportuj do PDF</button>
+    <button class="btn ok" id="btnExcel">Eksportuj do Excela</button>
+    <button class="btn" id="btnClear">Wyczyść dane</button>
+  </div>
+
+  <div class="section controls no-print">
+    <label>Imię i nazwisko: <input type="text" id="name"></label>
+    <label>Rok: <input type="number" id="year" style="width:90px"></label>
+    <label>Miesiąc:
+      <select id="month">
+        <option value="0">Styczeń</option><option value="1">Luty</option><option value="2">Marzec</option>
+        <option value="3">Kwiecień</option><option value="4">Maj</option><option value="5">Czerwiec</option>
+        <option value="6">Lipiec</option><option value="7">Sierpień</option><option value="8">Wrzesień</option>
+        <option value="9">Październik</option><option value="10">Listopad</option><option value="11">Grudzień</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="section" id="headerPrint">
+    <h2 style="text-align:center;margin-top:0">Podsumowanie wydatków – <span id="headerMonth"></span> <span id="headerYear"></span></h2>
+    <div style="text-align:center" class="small">Imię i nazwisko: <span id="headerName" class="muted">................................................</span></div>
+  </div>
+
+  <div class="section">
+    <div class="no-print" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+      <h3 style="margin:0; flex:1;">I. Koszty paliwa</h3>
+      <button class="btn" id="addFuel">➕ Dodaj tankowanie</button>
+    </div>
+    <table id="fuelTable">
+      <thead>
+        <tr>
+          <th style="width:70px">Dzień</th>
+          <th>Miejsce tankowania</th>
+          <th style="width:120px">Litry</th>
+          <th style="width:140px">Kwota (PLN)</th>
+          <th class="no-print" style="width:60px">Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="fuelBody">
+        <!-- wiersze JS -->
+      </tbody>
+    </table>
+    <div class="small muted">Wpisuj tylko dzień miesiąca (1–31). Litry i kwoty przyjmują wartości z przecinkiem lub kropką.</div>
+  </div>
+
+  <div class="section">
+    <div class="no-print" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+      <h3 style="margin:0; flex:1;">II. Koszty inne</h3>
+      <button class="btn" id="addOther">➕ Dodaj koszt</button>
+    </div>
+    <table id="otherTable">
+      <thead>
+        <tr>
+          <th>Nazwa</th>
+          <th style="width:160px">Kwota (PLN)</th>
+          <th class="no-print" style="width:60px">Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="otherBody">
+        <!-- wiersze JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div id="appFooterFull">Twórcy: Łukasz Stasinski &amp; ChatGPT • <span id="genDate"></span></div>
+  <div id="pdfFooter">LS &amp; GPT</div>
+</div>
+
+<script>
+  // ====== STAN I PAMIĘĆ ======
+  const stateDefault = {
+    name: "",
+    year: new Date().getFullYear(),
+    month: new Date().getMonth(),
+    fuel: [],   // {day: number, place: string, liters: number, amount: number}
+    other: []   // {name: string, amount: number}
+  };
+  let state = {...stateDefault};
+
+  function saveState(){ localStorage.setItem("wydatkiState", JSON.stringify(state)); }
+  function loadState(){
+    const raw = localStorage.getItem("wydatkiState");
+    if(raw){
+      try { state = {...stateDefault, ...JSON.parse(raw)}; }
+      catch(e){ console.error("Błąd wczytywania", e); state = {...stateDefault}; }
+    }
+  }
+
+  // ====== ELEMENTY ======
+  const elName = document.getElementById('name');
+  const elYear = document.getElementById('year');
+  const elMonth = document.getElementById('month');
+  const fuelBody = document.getElementById('fuelBody');
+  const otherBody = document.getElementById('otherBody');
+
+  // ====== RYSOWANIE ======
+  function fmtNum(n){
+    if(n===undefined || n===null || n==="") return "";
+    const num = typeof n === "number" ? n : parseFloat(String(n).replace(",", "."));
+    if(isNaN(num)) return "";
+    return num.toFixed(2).replace(".", ",");
+  }
+
+  function renderHeader(){
+    document.getElementById('headerMonth').textContent =
+      ["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"][state.month];
+    document.getElementById('headerYear').textContent = state.year;
+    document.getElementById('headerName').textContent = state.name || "................................................";
+  }
+
+  function renderFuel(){
+    fuelBody.innerHTML = "";
+    state.fuel.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="right"><input type="number" min="1" max="31" value="${row.day ?? ""}" data-idx="${idx}" data-field="day" data-type="fuel"></td>
+        <td><input type="text" value="${row.place ?? ""}" data-idx="${idx}" data-field="place" data-type="fuel"></td>
+        <td class="right"><input type="text" value="${row.liters ?? ""}" data-idx="${idx}" data-field="liters" data-type="fuel"></td>
+        <td class="right"><input type="text" value="${row.amount ?? ""}" data-idx="${idx}" data-field="amount" data-type="fuel"></td>
+        <td class="actions no-print"><button class="btn" data-remove="fuel" data-idx="${idx}">🗑</button></td>
+      `;
+      fuelBody.appendChild(tr);
+    });
+    if(state.fuel.length===0){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="5" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj tankowanie”.</td>`;
+      fuelBody.appendChild(tr);
+    }
+  }
+
+  function renderOther(){
+    otherBody.innerHTML = "";
+    state.other.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" value="${row.name ?? ""}" data-idx="${idx}" data-field="name" data-type="other"></td>
+        <td class="right"><input type="text" value="${row.amount ?? ""}" data-idx="${idx}" data-field="amount" data-type="other"></td>
+        <td class="actions no-print"><button class="btn" data-remove="other" data-idx="${idx}">🗑</button></td>
+      `;
+      otherBody.appendChild(tr);
+    });
+    if(state.other.length===0){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="3" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj koszt”.</td>`;
+      otherBody.appendChild(tr);
+    }
+  }
+
+  function renderAll(){
+    elName.value = state.name || "";
+    elYear.value = state.year;
+    elMonth.value = state.month;
+    renderHeader();
+    renderFuel();
+    renderOther();
+  }
+
+  // ====== ZDARZENIA INTERFEJSU ======
+  document.getElementById('addFuel').addEventListener('click', ()=>{
+    state.fuel.push({day:"", place:"", liters:"", amount:""});
+    saveState(); renderFuel();
+  });
+
+  document.getElementById('addOther').addEventListener('click', ()=>{
+    state.other.push({name:"", amount:""});
+    saveState(); renderOther();
+  });
+
+  // Delegacja zdarzeń dla inputów tabel
+  document.addEventListener('input', (e)=>{
+    const t = e.target;
+    const type = t.dataset.type;
+    const field = t.dataset.field;
+    const idx = t.dataset.idx;
+    if(type === 'fuel' && field && idx !== undefined){
+      state.fuel[idx][field] = t.value;
+      saveState();
+    }
+    if(type === 'other' && field && idx !== undefined){
+      state.other[idx][field] = t.value;
+      saveState();
+    }
+  });
+
+  // Usuwanie wierszy
+  document.addEventListener('click', (e)=>{
+    const t = e.target;
+    if(t.dataset && t.dataset.remove === 'fuel'){
+      const i = parseInt(t.dataset.idx,10);
+      state.fuel.splice(i,1);
+      saveState(); renderFuel();
+    }
+    if(t.dataset && t.dataset.remove === 'other'){
+      const i = parseInt(t.dataset.idx,10);
+      state.other.splice(i,1);
+      saveState(); renderOther();
+    }
+  });
+
+  // Nagłówek (nazwa/miesiąc/rok)
+  elName.addEventListener('input', ()=>{ state.name = elName.value; saveState(); renderHeader(); });
+  elYear.addEventListener('input', ()=>{ state.year = parseInt(elYear.value,10) || new Date().getFullYear(); saveState(); renderHeader(); });
+  elMonth.addEventListener('input', ()=>{ state.month = parseInt(elMonth.value,10); saveState(); renderHeader(); });
+
+  // PDF
+  document.getElementById('btnPdf').addEventListener('click', ()=>window.print());
+
+  // Excel
+  document.getElementById('btnExcel').addEventListener('click', ()=>{
+    const wb = XLSX.utils.book_new();
+    // Paliwo
+    const fuelRows = [["Dzień","Miejsce tankowania","Litry","Kwota (PLN)"]];
+    state.fuel.forEach(r=>{
+      fuelRows.push([r.day, r.place, r.liters, r.amount]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(fuelRows), "Paliwo");
+    // Inne
+    const otherRows = [["Nazwa","Kwota (PLN)"]];
+    state.other.forEach(r=>{
+      otherRows.push([r.name, r.amount]);
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(otherRows), "Koszty inne");
+    // Zapis
+    const m = (state.month+1).toString().padStart(2,'0');
+    XLSX.writeFile(wb, `Wydatki_${state.year}_${m}.xlsx`);
+  });
+
+  // Czyszczenie
+  document.getElementById('btnClear').addEventListener('click', ()=>{
+    if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){
+      localStorage.removeItem("wydatkiState");
+      state = {...stateDefault};
+      renderAll();
+    }
+  });
+
+  // Start
+  (function start(){
+    loadState();
+    renderAll();
+    const d=new Date();
+    document.getElementById("genDate").textContent = `Wygenerowano: ${d.toLocaleDateString("pl-PL",{year:"numeric",month:"2-digit",day:"2-digit"})} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;
+  })();
+</script>
+
+<!-- Rejestracja service workera (PWA jak w poprzedniej apce) -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("Service Worker zarejestrowany"));
+}
+</script>
+</body>
+</html>
