@@ -1,67 +1,65 @@
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Wydatki miesięczne</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wydatki miesięczne</title>
 
-  <!-- Ikony / manifest -->
-  <link rel="icon" href="favicon.ico">
-  <link rel="icon" sizes="192x192" href="icon-192.png">
-  <link rel="icon" sizes="512x512" href="icon-512.png">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="manifest" href="manifest.json">
+<!-- Ikony / manifest PWA -->
+<link rel="icon" href="favicon.ico">
+<link rel="icon" sizes="192x192" href="icon-192.png">
+<link rel="icon" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(180deg, #f7f9ff 0%, #eef2ff 100%);
-      color: #0f172a;
-    }
-    .wrap { max-width: 980px; margin: 24px auto; padding: 0 16px; }
-    .toolbar {
-      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-      background: #fff; border: 1px solid #e6e8f0; border-radius: 12px;
-      padding: 10px 12px; box-shadow: 0 4px 12px rgba(0,0,0,.05);
-      margin-bottom: 16px;
-    }
-    .toolbar .spacer { flex: 1; }
-    .btn {
-      padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px;
-      background: #fff; cursor: pointer; transition: .2s;
-    }
-    .btn.primary { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
-    .btn.ok { background: #16a34a; border-color: #16a34a; color: #fff; }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+<style>
+  :root{
+    --card:#fff; --border:#e6e8f0; --text:#0f172a; --muted:#64748b;
+    --btn:#0ea5e9; --btn-ok:#16a34a; --shadow:0 6px 20px rgba(15,23,42,.06);
+    --fuel-bg:#eef6ff; --other-bg:#f5f7fa;
+  }
+  body{ margin:0; font-family:system-ui,"Segoe UI",Roboto,sans-serif; color:var(--text);
+        background:linear-gradient(180deg,#f7f9ff 0%,#eef2ff 100%); }
+  .wrap{ max-width:980px; margin:26px auto; padding:0 16px; }
+  .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 12px; box-shadow:var(--shadow); margin-bottom:14px;}
+  .toolbar .spacer{ flex:1; }
+  .btn{ padding:8px 12px; border:1px solid var(--border); border-radius:10px; background:#fff; cursor:pointer; transition:.15s;
+        font-size:14px; }
+  .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.08); }
+  .btn.primary{ background:var(--btn); border-color:var(--btn); color:#fff; }
+  .btn.ok{ background:var(--btn-ok); border-color:var(--btn-ok); color:#fff; }
+  .controls{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow); margin-bottom:14px; }
+  .controls label{ margin-right:8px; display:inline-flex; align-items:center; gap:6px; }
+  .controls input,.controls select{ padding:6px 8px; border:1px solid var(--border); border-radius:10px; font-size:14px; }
+  .section{ background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:16px; box-shadow:var(--shadow); }
+  .section.fuel{ background:var(--fuel-bg); }
+  .section.other{ background:var(--other-bg); }
+  .cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
+  .card{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .row{ display:flex; flex-direction:column; gap:6px; }
+  .row label{ font-size:12px; color:var(--muted); }
+  .row input,.row select{ padding:6px 8px; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+  .card .actions{ display:flex; justify-content:space-between; gap:8px; }
+  .muted{ color:var(--muted); }
+  #footerApp{ margin-top:8px; text-align:center; font-size:12px; color:var(--muted); }
 
-    .controls label { margin-right: 8px; display: inline-flex; align-items: center; gap: 6px; }
-    .controls input, .controls select {
-      padding: 5px 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
-    }
+  /* Tabela do PDF (i podglądu) – klasyczna */
+  table.report{ width:100%; border-collapse:collapse; background:#fff; }
+  table.report th, table.report td{ border:1px solid #ddd; padding:6px 8px; font-size:13px; }
+  table.report th{ background:#f3f4f6; text-align:center; font-weight:600; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; background: #fff; border-radius: 10px; overflow: hidden; }
-    th, td { border: 1px solid #ddd; padding: 6px 8px; font-size: 13px; }
-    th { background: #f3f4f6; text-align: center; font-weight: 600; }
-    td input, td select {
-      width: 100%; border: 1px solid #ccc; border-radius: 6px;
-      padding: 4px 6px; box-sizing: border-box; font-size: 13px;
-    }
+  /* Wydruk PDF */
+  @media print{
+    body{ font-family:"Times New Roman", Times, serif; font-size:11px; background:#fff; }
+    .no-print{ display:none !important; }
+    table.report th, table.report td{ border:1px solid #000; padding:3px 5px; font-size:10px; background:#fff !important; }
+    #pdfFooter{ display:block; text-align:center; font-size:10px; margin-top:6px; }
+    @page{ size:A4 portrait; margin:8mm; }
+  }
+</style>
 
-    .small { font-size: 12px; color: #64748b; text-align: center; }
-    #footerApp { margin-top: 10px; text-align: center; font-size: 12px; color: #64748b; }
-
-    @media print {
-      body { font-family: "Times New Roman", Times, serif; font-size: 11px; background: #fff; }
-      .no-print { display: none !important; }
-      th, td { border: 1px solid #000; padding: 3px 5px; font-size: 10px; }
-      #footerApp { display: none; }
-      #pdfFooter { display: block; text-align: center; font-size: 10px; margin-top: 6px; }
-      @page { size: A4 portrait; margin: 8mm; }
-    }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -69,7 +67,7 @@
     <h1 style="margin:0;font-size:18px">Wydatki miesięczne</h1>
     <div class="spacer"></div>
     <button class="btn primary" id="btnPdf">Eksportuj do PDF</button>
-    <button class="btn ok" id="btnExcel">Eksportuj do Excela</button>
+    <button class="btn ok" id="btnExcel">Eksport do Excela</button>
     <button class="btn" id="btnClear">Wyczyść dane</button>
   </div>
 
@@ -84,140 +82,382 @@
         <option value="9">Październik</option><option value="10">Listopad</option><option value="11">Grudzień</option>
       </select>
     </label>
-    <button class="btn" id="addRow">➕ Dodaj wiersz</button>
   </div>
 
+  <div class="section fuel no-print">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+      <h3 style="margin:0;flex:1;">⛽ Tankowania</h3>
+      <button class="btn" id="addFuel">➕ Dodaj tankowanie</button>
+    </div>
+    <div id="fuelCards" class="cards"></div>
+  </div>
+
+  <div class="section other no-print">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+      <h3 style="margin:0;flex:1;">🧾 Inne wydatki</h3>
+      <button class="btn" id="addOther">➕ Dodaj wydatek</button>
+    </div>
+    <div id="otherCards" class="cards"></div>
+  </div>
+
+  <!-- Nagłówek + podgląd tabeli (też druk) -->
   <div class="section">
     <h2 style="text-align:center;margin:6px 0;">Podsumowanie wydatków – <span id="headerMonth"></span> <span id="headerYear"></span></h2>
-    <div style="text-align:center" class="small">Imię i nazwisko: <span id="headerName">............................................</span></div>
-    <table id="mainTable">
+    <div style="text-align:center; font-size:12px; color:#64748b;">Imię i nazwisko: <span id="headerName">............................................</span></div>
+
+    <table class="report" id="reportTable" style="margin-top:10px;">
       <thead>
         <tr>
           <th style="width:60px">Dzień</th>
           <th>Miejsce tankowania</th>
           <th style="width:90px">Litry</th>
-          <th style="width:110px">Kwota tankowania</th>
+          <th style="width:120px">Kwota tankowania</th>
           <th>Inne wydatki</th>
-          <th style="width:110px">Kwota</th>
-          <th class="no-print" style="width:60px">Akcje</th>
+          <th style="width:120px">Kwota</th>
         </tr>
       </thead>
-      <tbody id="tableBody"></tbody>
+      <tbody id="reportBody"></tbody>
     </table>
   </div>
 
-  <div id="footerApp">Twórcy: Łukasz Stasinski &amp; ChatGPT • <span id="genDate"></span></div>
+  <div id="footerApp" class="no-print">Twórcy: Łukasz Stasinski &amp; ChatGPT • <span id="genDate"></span></div>
   <div id="pdfFooter" style="display:none;">LS &amp; GPT</div>
 </div>
 
 <script>
-const LS_KEY = "wydatkiOneTable";
-let state = { name:"", year:new Date().getFullYear(), month:new Date().getMonth(), rows:[] };
+  // ========= STAN + PAMIĘĆ =========
+  const LS_KEY = "wydatki_monthly_v3";
+  const state = {
+    name: "", year: new Date().getFullYear(), month: new Date().getMonth(),
+    fuelByDay: {},           // { [day]: {place, liters, fuelAmount} }  (max 1 tankowanie / dzień)
+    others: []               // [{id, day, name, amount}]
+  };
+  let uid = 1;
 
-function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-function loadState(){
-  const raw = localStorage.getItem(LS_KEY);
-  if(raw){ try{ state = JSON.parse(raw); }catch(e){} }
-}
-
-function sortByDay(){ state.rows.sort((a,b)=>Number(a.day||0)-Number(b.day||0)); }
-
-const DAY_OPTIONS = Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
-
-function render(){
-  document.getElementById('name').value = state.name;
-  document.getElementById('year').value = state.year;
-  document.getElementById('month').value = state.month;
-  renderHeader();
-  renderTable();
-}
-
-function renderHeader(){
-  const months=["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
-  document.getElementById('headerMonth').textContent=months[state.month];
-  document.getElementById('headerYear').textContent=state.year;
-  document.getElementById('headerName').textContent=state.name||"............................................";
-}
-
-function renderTable(){
-  sortByDay();
-  const body=document.getElementById('tableBody');
-  body.innerHTML="";
-  if(state.rows.length===0){
-    body.innerHTML=`<tr><td colspan="7" class="small">Brak wpisów – kliknij "Dodaj wiersz".</td></tr>`;
-    return;
+  function save(){ localStorage.setItem(LS_KEY, JSON.stringify({...state, _uid: uid})); }
+  function load(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    try{
+      const parsed = JSON.parse(raw);
+      state.name = parsed.name||state.name;
+      state.year = parsed.year||state.year;
+      state.month = (parsed.month ?? state.month);
+      state.fuelByDay = parsed.fuelByDay || {};
+      state.others = Array.isArray(parsed.others) ? parsed.others : [];
+      uid = parsed._uid || 1;
+    }catch{}
   }
-  state.rows.forEach((r,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td><select data-idx="${i}" data-field="day"><option value=""></option>${DAY_OPTIONS}</select></td>
-      <td><input type="text" data-idx="${i}" data-field="place" value="${r.place??""}"></td>
-      <td><input type="text" data-idx="${i}" data-field="liters" value="${r.liters??""}"></td>
-      <td><input type="text" data-idx="${i}" data-field="fuelAmount" value="${r.fuelAmount??""}"></td>
-      <td><input type="text" data-idx="${i}" data-field="otherName" value="${r.otherName??""}"></td>
-      <td><input type="text" data-idx="${i}" data-field="otherAmount" value="${r.otherAmount??""}"></td>
-      <td class="no-print"><button class="btn" data-del="${i}">🗑</button></td>`;
-    body.appendChild(tr);
-    tr.querySelector("select").value=r.day??"";
+
+  // ========= ELEMENTY =========
+  const elName = document.getElementById('name');
+  const elYear = document.getElementById('year');
+  const elMonth = document.getElementById('month');
+  const fuelWrap = document.getElementById('fuelCards');
+  const otherWrap = document.getElementById('otherCards');
+
+  const DAY_OPTIONS = Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+
+  // ========= RENDER: NAGŁÓWEK + PODGLĄD TABELI =========
+  function renderHeader(){
+    const months=["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
+    document.getElementById('headerMonth').textContent = months[state.month];
+    document.getElementById('headerYear').textContent = state.year;
+    document.getElementById('headerName').textContent = state.name || "............................................";
+  }
+
+  function buildCombinedRows(){
+    // Zbierz dni, w których cokolwiek jest
+    const daySet = new Set();
+    Object.keys(state.fuelByDay).forEach(d=>{
+      const f = state.fuelByDay[d];
+      if((f?.place?.trim())||(f?.liters?.trim())||(f?.fuelAmount?.trim())) daySet.add(Number(d));
+    });
+    state.others.forEach(o=>{ if(o.day && (o.name?.trim() || o.amount?.trim())) daySet.add(Number(o.day)); });
+    const days = Array.from(daySet).sort((a,b)=>a-b);
+
+    const rows = [];
+    days.forEach(day=>{
+      const f = state.fuelByDay[day] || {};
+      const validFuel = (f.place?.trim() || f.liters?.trim() || f.fuelAmount?.trim());
+      const others = state.others
+        .filter(o=>Number(o.day)===Number(day) && (o.name?.trim() || o.amount?.trim()))
+        .sort((a,b)=>(a.id-b.id));
+
+      if(others.length === 0){
+        // tylko tankowanie (lub puste, ale dzień zarejestrowany)
+        if(validFuel){
+          rows.push([day, f.place||"", f.liters||"", f.fuelAmount||"", "", ""]);
+        }
+      } else {
+        // są inne wydatki
+        // pierwszy łączymy z tankowaniem
+        const first = others[0];
+        rows.push([
+          day,
+          validFuel ? (f.place||"") : "",
+          validFuel ? (f.liters||"") : "",
+          validFuel ? (f.fuelAmount||"") : "",
+          first.name||"",
+          first.amount||""
+        ]);
+        // kolejne wydatki jako oddzielne linie
+        for(let i=1;i<others.length;i++){
+          const o = others[i];
+          rows.push([day, "", "", "", o.name||"", o.amount||""]);
+        }
+      }
+    });
+    return rows;
+  }
+
+  function renderReportTable(){
+    const tbody = document.getElementById('reportBody');
+    tbody.innerHTML = "";
+    const rows = buildCombinedRows();
+    if(rows.length===0){
+      tbody.innerHTML = `<tr><td colspan="6" class="muted" style="text-align:center">Brak wpisów</td></tr>`;
+      return;
+    }
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:center">${r[0]}</td>
+        <td>${r[1]}</td>
+        <td style="text-align:right">${r[2]}</td>
+        <td style="text-align:right">${r[3]}</td>
+        <td>${r[4]}</td>
+        <td style="text-align:right">${r[5]}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ========= RENDER: KARTY (INTERFEJS) =========
+  function renderFuel(){
+    fuelWrap.innerHTML = "";
+    // pokaż tylko dni, dla których coś jest albo utworzone tankowanie
+    const days = Object.keys(state.fuelByDay)
+      .map(Number)
+      .filter(d=>{
+        const f=state.fuelByDay[d];
+        return f && (f.place?.trim() || f.liters?.trim() || f.fuelAmount?.trim() || f._created);
+      })
+      .sort((a,b)=>a-b);
+
+    days.forEach(day=>{
+      const f = state.fuelByDay[day] || {};
+      const card = document.createElement('div');
+      card.className = "card";
+      card.innerHTML = `
+        <div class="row">
+          <label>Dzień</label>
+          <select data-kind="fuel-day" data-day="${day}">
+            <option value=""></option>${DAY_OPTIONS}
+          </select>
+        </div>
+        <div class="row">
+          <label>Miejsce tankowania</label>
+          <input type="text" data-kind="fuel-field" data-field="place" data-day="${day}" value="${f.place??""}" placeholder="np. Orlen Wolsztyn">
+        </div>
+        <div class="row">
+          <label>Litry</label>
+          <input type="text" data-kind="fuel-field" data-field="liters" data-day="${day}" value="${f.liters??""}" placeholder="np. 35,5">
+        </div>
+        <div class="row">
+          <label>Kwota tankowania (PLN)</label>
+          <input type="text" data-kind="fuel-field" data-field="fuelAmount" data-day="${day}" value="${f.fuelAmount??""}" placeholder="np. 250,00">
+        </div>
+        <div class="actions">
+          <button class="btn" data-kind="fuel-delete" data-day="${day}">🗑 Usuń tankowanie</button>
+        </div>
+      `;
+      fuelWrap.appendChild(card);
+      // ustal wartość select po dodaniu do DOM
+      card.querySelector('select').value = String(day);
+    });
+
+    if(days.length===0){
+      fuelWrap.innerHTML = `<div class="muted" style="text-align:center">Brak wpisów – kliknij „Dodaj tankowanie”.</div>`;
+    }
+  }
+
+  function renderOthers(){
+    otherWrap.innerHTML = "";
+    const items = [...state.others].sort((a,b)=>{
+      if((a.day||0)!==(b.day||0)) return (a.day||0)-(b.day||0);
+      return a.id-b.id;
+    });
+    if(items.length===0){
+      otherWrap.innerHTML = `<div class="muted" style="text-align:center">Brak wpisów – kliknij „Dodaj wydatek”.</div>`;
+      return;
+    }
+    items.forEach(item=>{
+      const card = document.createElement('div');
+      card.className = "card";
+      card.innerHTML = `
+        <div class="row">
+          <label>Dzień</label>
+          <select data-kind="other-day" data-id="${item.id}">
+            <option value=""></option>${DAY_OPTIONS}
+          </select>
+        </div>
+        <div class="row">
+          <label>Inny wydatek</label>
+          <input type="text" data-kind="other-field" data-field="name" data-id="${item.id}" value="${item.name??""}" placeholder="np. Myjnia">
+        </div>
+        <div class="row">
+          <label>Kwota (PLN)</label>
+          <input type="text" data-kind="other-field" data-field="amount" data-id="${item.id}" value="${item.amount??""}" placeholder="np. 25,00">
+        </div>
+        <div class="actions">
+          <button class="btn" data-kind="other-delete" data-id="${item.id}">🗑 Usuń wydatek</button>
+        </div>
+      `;
+      otherWrap.appendChild(card);
+      card.querySelector('select').value = item.day ?? "";
+    });
+  }
+
+  function renderAll(){
+    elName.value = state.name;
+    elYear.value = state.year;
+    elMonth.value = state.month;
+    renderHeader();
+    renderFuel();
+    renderOthers();
+    renderReportTable();
+  }
+
+  // ========= ZDARZENIA (BEZ PRZE-RENDERU NA LITERĘ) =========
+  document.getElementById('addFuel').addEventListener('click', ()=>{
+    // Tworzymy nowy wpis tankowania z domyślnym dniem (pusty) – pokaże się jako karta
+    // Dla rozróżnienia tworzymy chwilowy day=1 i pozwalamy zmienić, ale lepiej zrobić bufor:
+    // użyjemy najniższego wolnego dnia 1..31, który nie ma jeszcze tankowania
+    let newDay = "";
+    for(let d=1; d<=31; d++){ if(!state.fuelByDay[d]) { newDay = d; break; } }
+    if(newDay===""){ newDay=31; } // awaryjnie
+    state.fuelByDay[newDay] = { place:"", liters:"", fuelAmount:"", _created:true };
+    save(); renderFuel(); renderReportTable();
   });
-}
 
-document.getElementById('addRow').onclick=()=>{
-  state.rows.push({day:"",place:"",liters:"",fuelAmount:"",otherName:"",otherAmount:""});
-  saveState(); renderTable();
-};
-
-document.addEventListener("input",e=>{
-  const t=e.target;
-  const idx=t.dataset.idx;
-  const field=t.dataset.field;
-  if(idx!==undefined && field){
-    if(field==="day") state.rows[idx][field]=t.value===""?"":parseInt(t.value);
-    else state.rows[idx][field]=t.value;
-    saveState(); renderTable();
-  }
-});
-
-document.addEventListener("click",e=>{
-  const t=e.target;
-  if(t.dataset.del!==undefined){
-    state.rows.splice(t.dataset.del,1);
-    saveState(); renderTable();
-  }
-});
-
-document.getElementById("name").oninput=()=>{ state.name=document.getElementById("name").value; saveState(); renderHeader(); };
-document.getElementById("year").oninput=()=>{ state.year=parseInt(document.getElementById("year").value)||new Date().getFullYear(); saveState(); renderHeader(); };
-document.getElementById("month").oninput=()=>{ state.month=parseInt(document.getElementById("month").value); saveState(); renderHeader(); renderTable(); };
-
-document.getElementById("btnPdf").onclick=()=>window.print();
-
-document.getElementById("btnExcel").onclick=()=>{
-  const wb=XLSX.utils.book_new();
-  const data=[["Dzień","Miejsce tankowania","Litry","Kwota tankowania","Inne wydatki","Kwota"]];
-  sortByDay();
-  state.rows.forEach(r=>{
-    if(r.day||r.place||r.liters||r.fuelAmount||r.otherName||r.otherAmount)
-      data.push([r.day||"",r.place||"",r.liters||"",r.fuelAmount||"",r.otherName||"",r.otherAmount||""]);
+  document.getElementById('addOther').addEventListener('click', ()=>{
+    state.others.push({ id: uid++, day:"", name:"", amount:"" });
+    save(); renderOthers(); renderReportTable();
   });
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),"Wydatki");
-  const m=String(state.month+1).padStart(2,"0");
-  XLSX.writeFile(wb,`Wydatki_${state.year}_${m}.xlsx`);
-};
 
-document.getElementById("btnClear").onclick=()=>{
-  if(confirm("Czy na pewno chcesz usunąć wszystkie dane?")){
-    localStorage.removeItem(LS_KEY);
-    state={name:"",year:new Date().getFullYear(),month:new Date().getMonth(),rows:[]};
-    render();
-  }
-};
+  // Zmiany w polach TANKOWANIA
+  document.addEventListener('input', (e)=>{
+    const t = e.target;
+    const kind = t.dataset.kind;
 
-(function start(){
-  loadState(); render();
-  const d=new Date();
-  document.getElementById("genDate").textContent=`Wygenerowano: ${d.toLocaleDateString("pl-PL")} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;
-})();
+    if(kind === 'fuel-field'){
+      const day = t.dataset.day;
+      const field = t.dataset.field;
+      if(!state.fuelByDay[day]) state.fuelByDay[day] = {place:"",liters:"",fuelAmount:""};
+      state.fuelByDay[day][field] = t.value;
+      save(); // bez renderu – nie tracimy fokusa
+      renderReportTable(); // podgląd tabeli
+    }
+    if(kind === 'other-field'){
+      const id = Number(t.dataset.id);
+      const field = t.dataset.field;
+      const idx = state.others.findIndex(x=>x.id===id);
+      if(idx>=0){
+        state.others[idx][field] = t.value;
+        save();
+        renderReportTable();
+      }
+    }
+  });
+
+  // Zmiana dnia (select) – można odświeżyć sekcję, żeby się posortowało
+  document.addEventListener('change', (e)=>{
+    const t = e.target;
+    const kind = t.dataset.kind;
+
+    if(kind === 'fuel-day'){
+      const oldDay = Number(t.dataset.day);
+      const newDay = t.value==="" ? "" : Number(t.value);
+      const data = state.fuelByDay[oldDay];
+      if(newDay==="" ){ // usuwamy przypisanie dnia
+        delete state.fuelByDay[oldDay];
+      }else{
+        delete state.fuelByDay[oldDay];
+        state.fuelByDay[newDay] = data || {place:"",liters:"",fuelAmount:""};
+      }
+      save(); renderFuel(); renderReportTable();
+    }
+
+    if(kind === 'other-day'){
+      const id = Number(t.dataset.id);
+      const idx = state.others.findIndex(x=>x.id===id);
+      if(idx>=0){
+        state.others[idx].day = t.value==="" ? "" : Number(t.value);
+        save(); renderOthers(); renderReportTable();
+      }
+    }
+  });
+
+  // Usuwanie wpisów
+  document.addEventListener('click', (e)=>{
+    const t = e.target;
+    if(t.dataset.kind === 'fuel-delete'){
+      const day = Number(t.dataset.day);
+      delete state.fuelByDay[day];
+      save(); renderFuel(); renderReportTable();
+    }
+    if(t.dataset.kind === 'other-delete'){
+      const id = Number(t.dataset.id);
+      const idx = state.others.findIndex(x=>x.id===id);
+      if(idx>=0) state.others.splice(idx,1);
+      save(); renderOthers(); renderReportTable();
+    }
+  });
+
+  // Główny nagłówek
+  elName.addEventListener('input', ()=>{ state.name = elName.value; save(); renderHeader(); });
+  elYear.addEventListener('input', ()=>{ state.year = parseInt(elYear.value,10) || new Date().getFullYear(); save(); renderHeader(); });
+  elMonth.addEventListener('input', ()=>{ state.month = parseInt(elMonth.value,10); save(); renderHeader(); });
+
+  // PDF (druk) – tabela już jest na stronie, tylko drukujemy
+  document.getElementById('btnPdf').addEventListener('click', ()=>{
+    renderReportTable();
+    window.print();
+  });
+
+  // Excel – jeden arkusz, ta sama logika łączenia
+  document.getElementById('btnExcel').addEventListener('click', ()=>{
+    const rows = [["Dzień","Miejsce tankowania","Litry","Kwota tankowania","Inne wydatki","Kwota"]];
+    const combined = buildCombinedRows();
+    combined.forEach(r=>rows.push(r));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Wydatki");
+    const m = String(state.month+1).padStart(2,'0');
+    XLSX.writeFile(wb, `Wydatki_${state.year}_${m}.xlsx`);
+  });
+
+  // Czyszczenie
+  document.getElementById('btnClear').addEventListener('click', ()=>{
+    if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){
+      localStorage.removeItem(LS_KEY);
+      state.name=""; state.year=new Date().getFullYear(); state.month=new Date().getMonth();
+      state.fuelByDay={}; state.others=[]; uid=1;
+      renderAll();
+    }
+  });
+
+  // Start
+  (function(){
+    load();
+    elName.value = state.name;
+    elYear.value = state.year;
+    elMonth.value = state.month;
+    const d=new Date();
+    document.getElementById("genDate").textContent =
+      `${d.toLocaleDateString("pl-PL",{year:"numeric",month:"2-digit",day:"2-digit"})} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;
+    renderAll();
+  })();
 </script>
 
 <!-- Service Worker -->
