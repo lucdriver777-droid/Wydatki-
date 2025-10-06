@@ -5,47 +5,78 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wydatki miesięczne</title>
 
-  <!-- 🔽 Ikony aplikacji -->
+  <!-- Ikony / manifest PWA -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-
-  <!-- Manifest PWA -->
   <link rel="manifest" href="manifest.json">
 
   <style>
-    body { margin:0; font-family:"Times New Roman", Times, serif; background:#f7f7fb; color:#111; }
-    .wrap { max-width:980px; margin:24px auto; padding:0 16px; }
-    .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
-    .toolbar .spacer { flex:1; }
-    .btn { padding:6px 10px; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-size:13px; background:#fff; }
-    .btn.primary { background:#0ea5e9; border-color:#0ea5e9; color:#fff; }
-    .btn.ok { background:#16a34a; border-color:#16a34a; color:#fff; }
-    .section { background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:14px; }
-    .controls label { margin-right:8px; display:inline-flex; align-items:center; gap:6px; }
-    .controls input, .controls select { padding:4px 6px; border:1px solid #ccc; border-radius:6px; font-size:13px; }
-    h2 { margin:6px 0 10px; font-size:18px; }
-    h3 { margin:10px 0 8px; font-size:15px; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border:1px solid #ddd; padding:4px 6px; font-size:12px; }
-    th { background:#f0f0f0; text-align:center; }
-    td input { width:100%; border:1px solid #ccc; border-radius:4px; padding:3px 5px; font-size:12px; box-sizing:border-box; }
-    .right { text-align:right; }
-    .actions { text-align:right; }
-    .small { font-size:11px; color:#555; }
-    .muted { color:#666; }
-    #appFooterFull { margin-top:10px; text-align:center; font-size:11px; font-style:italic; }
-    #pdfFooter { display:none; text-align:center; font-size:10px; padding-top:4px; }
+    /* Ekran: nowocześnie i jasno */
+    :root{
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --border: #e6e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --btn: #0ea5e9;
+      --btn-ok: #16a34a;
+      --shadow: 0 6px 20px rgba(15,23,42,.06);
+      --fuel-bg: #eef6ff;      /* delikatny błękit */
+      --other-bg: #f5f7fa;     /* jasny szary */
+      --today: #fff7cc;        /* miękka żółć dla "dziś" (tylko UI) */
+    }
+    html,body{ height:100%; }
+    body{
+      margin:0; background:linear-gradient(180deg,#f7f9ff 0%, #eef2ff 100%);
+      color:var(--text); font-family:system-ui, Segoe UI, Roboto, sans-serif;
+    }
+    .wrap{ max-width:980px; margin:28px auto; padding:0 16px; }
+    .toolbar{
+      display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;
+      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 12px; box-shadow:var(--shadow);
+    }
+    .toolbar .spacer{ flex:1; }
+    .btn{
+      padding:8px 12px; border:1px solid var(--border); border-radius:10px; cursor:pointer; font-size:14px; background:#fff;
+      transition:transform .06s ease, box-shadow .12s ease, background .15s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.08); }
+    .btn.primary{ background:var(--btn); border-color:var(--btn); color:#fff; }
+    .btn.ok{ background:var(--btn-ok); border-color:var(--btn-ok); color:#fff; }
+    .section{
+      background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:16px; box-shadow:var(--shadow);
+    }
+    .section.fuel{ background: linear-gradient(0deg, var(--fuel-bg), var(--fuel-bg)); }
+    .section.other{ background: linear-gradient(0deg, var(--other-bg), var(--other-bg)); }
+    .controls label{ margin-right:8px; display:inline-flex; align-items:center; gap:6px; }
+    .controls input, .controls select{ padding:6px 8px; border:1px solid var(--border); border-radius:10px; font-size:14px; background:#fff; }
+    h2{ margin:8px 0 10px; font-size:18px; }
+    h3{ margin:8px 0 10px; font-size:15px; display:flex; align-items:center; gap:8px; }
+    h3 .icon{ font-size:16px; }
+    table{ width:100%; border-collapse:collapse; overflow:hidden; border-radius:12px; }
+    th, td{ border:1px solid #e5e7eb; padding:6px 8px; font-size:13px; background:#fff; }
+    th{ background:#f3f4f6; text-align:center; font-weight:600; }
+    td input, td select{
+      width:100%; border:1px solid var(--border); border-radius:8px; padding:5px 7px; font-size:13px; background:#fff; box-sizing:border-box;
+    }
+    tr.today td{ background:var(--today); }
+    .small{ font-size:12px; color:var(--muted); }
+    .muted{ color:var(--muted); }
+    #appFooterFull{ margin-top:8px; text-align:center; font-size:12px; color:var(--muted); }
 
-    @media print {
-      body { font-size:11px; }
-      .no-print { display:none !important; }
-      table th, table td { padding:2px 3px; font-size:10px; }
-      td input { border:none; padding:0; }
-      #appFooterFull { display:none; }
-      #pdfFooter { display:block; }
-      @page { size:A4 portrait; margin:8mm; }
+    /* PDF: klasycznie, czarno-biało, Times */
+    @media print{
+      body{ font-family:"Times New Roman", Times, serif; font-size:11px; background:#fff; }
+      .no-print{ display:none !important; }
+      .wrap{ max-width:auto; margin:0; padding:0; }
+      .section, .toolbar{ box-shadow:none; border:none; background:#fff; }
+      table th, table td{ padding:2px 3px; font-size:10px; background:#fff !important; }
+      tr.today td{ background:#fff !important; } /* w PDF bez koloru dla 'dzisiaj' */
+      #appFooterFull{ display:none; }
+      #pdfFooter{ display:block; text-align:center; font-size:10px; padding-top:6px; }
+      @page{ size:A4 portrait; margin:8mm; }
     }
   </style>
 
@@ -54,16 +85,16 @@
 <body>
 <div class="wrap">
   <div class="toolbar no-print">
-    <h1 style="margin:0;font-size:18px">💰 Wydatki miesięczne</h1>
+    <h1 style="margin:0;font-size:18px">Wydatki miesięczne</h1>
     <div class="spacer"></div>
     <button class="btn primary" id="btnPdf">Eksportuj do PDF</button>
-    <button class="btn ok" id="btnExcel">Eksportuj do Excela</button>
+    <button class="btn ok" id="btnExcel">Eksport do Excela</button>
     <button class="btn" id="btnClear">Wyczyść dane</button>
   </div>
 
   <div class="section controls no-print">
-    <label>Imię i nazwisko: <input type="text" id="name"></label>
-    <label>Rok: <input type="number" id="year" style="width:90px"></label>
+    <label>Imię i nazwisko: <input type="text" id="name" placeholder="np. Jan Kowalski"></label>
+    <label>Rok: <input type="number" id="year" style="width:100px"></label>
     <label>Miesiąc:
       <select id="month">
         <option value="0">Styczeń</option><option value="1">Luty</option><option value="2">Marzec</option>
@@ -79,36 +110,37 @@
     <div style="text-align:center" class="small">Imię i nazwisko: <span id="headerName" class="muted">................................................</span></div>
   </div>
 
-  <div class="section">
-    <div class="no-print" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-      <h3 style="margin:0; flex:1;">I. Koszty paliwa</h3>
+  <div class="section fuel">
+    <div class="no-print" style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+      <h3 style="margin:0; flex:1;"><span class="icon">⛽</span>I. Koszty paliwa</h3>
       <button class="btn" id="addFuel">➕ Dodaj tankowanie</button>
     </div>
-    <table id="fuelTable">
+    <table>
       <thead>
         <tr>
-          <th style="width:70px">Dzień</th>
+          <th style="width:80px">Dzień</th>
           <th>Miejsce tankowania</th>
           <th style="width:120px">Litry</th>
           <th style="width:140px">Kwota (PLN)</th>
-          <th class="no-print" style="width:60px">Akcje</th>
+          <th class="no-print" style="width:70px">Akcje</th>
         </tr>
       </thead>
       <tbody id="fuelBody"></tbody>
     </table>
   </div>
 
-  <div class="section">
-    <div class="no-print" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-      <h3 style="margin:0; flex:1;">II. Koszty inne</h3>
+  <div class="section other">
+    <div class="no-print" style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+      <h3 style="margin:0; flex:1;"><span class="icon">🧾</span>II. Koszty inne</h3>
       <button class="btn" id="addOther">➕ Dodaj koszt</button>
     </div>
-    <table id="otherTable">
+    <table>
       <thead>
         <tr>
-          <th>Nazwa</th>
+          <th style="width:80px">Dzień</th>
+          <th>Nazwa kosztu</th>
           <th style="width:160px">Kwota (PLN)</th>
-          <th class="no-print" style="width:60px">Akcje</th>
+          <th class="no-print" style="width:70px">Akcje</th>
         </tr>
       </thead>
       <tbody id="otherBody"></tbody>
@@ -116,99 +148,214 @@
   </div>
 
   <div id="appFooterFull">Twórcy: Łukasz Stasinski &amp; ChatGPT • <span id="genDate"></span></div>
-  <div id="pdfFooter">LS &amp; GPT</div>
+  <div id="pdfFooter" style="display:none;">LS &amp; GPT</div>
 </div>
 
 <script>
-  // ====== STAN I PAMIĘĆ ======
+  // ====== STAN + PAMIĘĆ ======
   const stateDefault = {
     name: "",
     year: new Date().getFullYear(),
     month: new Date().getMonth(),
-    fuel: [],
-    other: []
+    fuel: [],   // {day:number, place:string, liters:string, amount:string}
+    other: []   // {day:number, name:string, amount:string}
   };
   let state = {...stateDefault};
+  const LS_KEY = "wydatkiState_v2";
 
-  function saveState(){ localStorage.setItem("wydatkiState", JSON.stringify(state)); }
+  function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
   function loadState(){
-    const raw = localStorage.getItem("wydatkiState");
-    if(raw){ try { state = {...stateDefault, ...JSON.parse(raw)}; } catch(e){ state = {...stateDefault}; } }
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    try { state = {...stateDefault, ...JSON.parse(raw)}; }
+    catch { state = {...stateDefault}; }
   }
 
-  const elName=document.getElementById('name'), elYear=document.getElementById('year'), elMonth=document.getElementById('month');
-  const fuelBody=document.getElementById('fuelBody'), otherBody=document.getElementById('otherBody');
+  // ====== ELEMENTY ======
+  const elName = document.getElementById('name');
+  const elYear = document.getElementById('year');
+  const elMonth = document.getElementById('month');
+  const fuelBody = document.getElementById('fuelBody');
+  const otherBody = document.getElementById('otherBody');
 
-  function fmtNum(n){ if(n===""||n==null)return"";const num=parseFloat(String(n).replace(",","."));
-    return isNaN(num)?"":num.toFixed(2).replace(".",","); }
+  // ====== POMOCNICZE ======
+  const DAY_OPTIONS = Array.from({length:31}, (_,i)=>i+1)
+    .map(d=>`<option value="${d}">${d}</option>`).join("");
+
+  function todayMatch(day){
+    const now = new Date();
+    return (state.year === now.getFullYear() && state.month === now.getMonth() && Number(day) === now.getDate());
+  }
+
+  function sortByDay(arr, field="day"){
+    arr.sort((a,b)=>(Number(a[field]||0) - Number(b[field]||0)));
+  }
 
   function renderHeader(){
-    const m=["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
-    document.getElementById('headerMonth').textContent=m[state.month];
-    document.getElementById('headerYear').textContent=state.year;
-    document.getElementById('headerName').textContent=state.name||"................................................";
+    const months = ["styczeń","luty","marzec","kwiecień","maj","czerwiec","lipiec","sierpień","wrzesień","październik","listopad","grudzień"];
+    document.getElementById('headerMonth').textContent = months[state.month];
+    document.getElementById('headerYear').textContent = state.year;
+    document.getElementById('headerName').textContent = state.name || "................................................";
   }
 
   function renderFuel(){
-    fuelBody.innerHTML="";
-    if(state.fuel.length===0){ fuelBody.innerHTML='<tr><td colspan="5" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj tankowanie”.</td></tr>'; return; }
-    state.fuel.forEach((r,i)=>fuelBody.insertAdjacentHTML('beforeend',`
-      <tr>
-        <td><input type="number" value="${r.day??''}" data-idx="${i}" data-type="fuel" data-field="day"></td>
-        <td><input type="text" value="${r.place??''}" data-idx="${i}" data-type="fuel" data-field="place"></td>
-        <td><input type="text" value="${r.liters??''}" data-idx="${i}" data-type="fuel" data-field="liters" class="right"></td>
-        <td><input type="text" value="${r.amount??''}" data-idx="${i}" data-type="fuel" data-field="amount" class="right"></td>
+    sortByDay(state.fuel, "day");
+    fuelBody.innerHTML = "";
+    if(state.fuel.length===0){
+      fuelBody.innerHTML = `<tr><td colspan="5" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj tankowanie”.</td></tr>`;
+      return;
+    }
+    state.fuel.forEach((r,i)=>{
+      const isToday = todayMatch(r.day);
+      const tr = document.createElement('tr');
+      if(isToday) tr.classList.add('today');
+      tr.innerHTML = `
+        <td>
+          <select data-type="fuel" data-field="day" data-idx="${i}">
+            <option value=""></option>${DAY_OPTIONS}
+          </select>
+        </td>
+        <td><input type="text" value="${r.place ?? ""}" data-type="fuel" data-field="place" data-idx="${i}" placeholder="np. Orlen Wolsztyn"></td>
+        <td><input type="text" value="${r.liters ?? ""}" data-type="fuel" data-field="liters" data-idx="${i}" placeholder="np. 35,5"></td>
+        <td><input type="text" value="${r.amount ?? ""}" data-type="fuel" data-field="amount" data-idx="${i}" placeholder="np. 250,00"></td>
         <td class="no-print"><button class="btn" data-remove="fuel" data-idx="${i}">🗑</button></td>
-      </tr>`));
+      `;
+      fuelBody.appendChild(tr);
+      const sel = tr.querySelector('select');
+      sel.value = r.day ?? "";
+    });
   }
 
   function renderOther(){
-    otherBody.innerHTML="";
-    if(state.other.length===0){ otherBody.innerHTML='<tr><td colspan="3" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj koszt”.</td></tr>'; return; }
-    state.other.forEach((r,i)=>otherBody.insertAdjacentHTML('beforeend',`
-      <tr>
-        <td><input type="text" value="${r.name??''}" data-idx="${i}" data-type="other" data-field="name"></td>
-        <td><input type="text" value="${r.amount??''}" data-idx="${i}" data-type="other" data-field="amount" class="right"></td>
+    sortByDay(state.other, "day");
+    otherBody.innerHTML = "";
+    if(state.other.length===0){
+      otherBody.innerHTML = `<tr><td colspan="4" class="small muted" style="text-align:center">Brak wpisów – kliknij „Dodaj koszt”.</td></tr>`;
+      return;
+    }
+    state.other.forEach((r,i)=>{
+      const isToday = todayMatch(r.day);
+      const tr = document.createElement('tr');
+      if(isToday) tr.classList.add('today');
+      tr.innerHTML = `
+        <td>
+          <select data-type="other" data-field="day" data-idx="${i}">
+            <option value=""></option>${DAY_OPTIONS}
+          </select>
+        </td>
+        <td><input type="text" value="${r.name ?? ""}" data-type="other" data-field="name" data-idx="${i}" placeholder="np. Myjnia"></td>
+        <td><input type="text" value="${r.amount ?? ""}" data-type="other" data-field="amount" data-idx="${i}" placeholder="np. 25,00"></td>
         <td class="no-print"><button class="btn" data-remove="other" data-idx="${i}">🗑</button></td>
-      </tr>`));
+      `;
+      otherBody.appendChild(tr);
+      const sel = tr.querySelector('select');
+      sel.value = r.day ?? "";
+    });
   }
 
-  function renderAll(){ elName.value=state.name; elYear.value=state.year; elMonth.value=state.month; renderHeader(); renderFuel(); renderOther(); }
+  function renderAll(){
+    elName.value = state.name || "";
+    elYear.value = state.year;
+    elMonth.value = state.month;
+    renderHeader();
+    renderFuel();
+    renderOther();
+  }
 
-  document.getElementById('addFuel').onclick=()=>{state.fuel.push({day:"",place:"",liters:"",amount:""});saveState();renderFuel();};
-  document.getElementById('addOther').onclick=()=>{state.other.push({name:"",amount:""});saveState();renderOther();};
-  document.addEventListener('input',e=>{
-    const t=e.target;const{type,field,idx}=t.dataset;
-    if(type&&field&&idx!==undefined){
-      state[type][idx][field]=t.value;saveState();
-    }});
-  document.addEventListener('click',e=>{
-    const t=e.target;if(t.dataset.remove){
-      state[t.dataset.remove].splice(parseInt(t.dataset.idx),1);saveState();
-      if(t.dataset.remove==='fuel')renderFuel();else renderOther();
-    }});
-  elName.oninput=()=>{state.name=elName.value;saveState();renderHeader();};
-  elYear.oninput=()=>{state.year=parseInt(elYear.value)||new Date().getFullYear();saveState();renderHeader();};
-  elMonth.oninput=()=>{state.month=parseInt(elMonth.value);saveState();renderHeader();};
-  document.getElementById('btnPdf').onclick=()=>window.print();
-  document.getElementById('btnExcel').onclick=()=>{
-    const wb=XLSX.utils.book_new();
-    const fuel=[["Dzień","Miejsce","Litry","Kwota"]];
-    state.fuel.forEach(r=>fuel.push([r.day,r.place,r.liters,r.amount]));
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(fuel),"Paliwo");
-    const other=[["Nazwa","Kwota"]];
-    state.other.forEach(r=>other.push([r.name,r.amount]));
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(other),"Koszty inne");
-    XLSX.writeFile(wb,`Wydatki_${state.year}_${String(state.month+1).padStart(2,'0')}.xlsx`);
-  };
-  document.getElementById('btnClear').onclick=()=>{if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){localStorage.removeItem("wydatkiState");state={...stateDefault};renderAll();}};
-  (function start(){loadState();renderAll();const d=new Date();document.getElementById("genDate").textContent=`Wygenerowano: ${d.toLocaleDateString("pl-PL",{year:"numeric",month:"2-digit",day:"2-digit"})} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;})();
+  // ====== ZDARZENIA ======
+  document.getElementById('addFuel').addEventListener('click', ()=>{
+    state.fuel.push({day:"", place:"", liters:"", amount:""});
+    saveState(); renderFuel();
+  });
+
+  document.getElementById('addOther').addEventListener('click', ()=>{
+    state.other.push({day:"", name:"", amount:""});
+    saveState(); renderOther();
+  });
+
+  // Edycja komórek (input/select)
+  document.addEventListener('input', (e)=>{
+    const t = e.target;
+    const { type, field, idx } = t.dataset;
+    if(!type || field===undefined || idx===undefined) return;
+
+    if(field === "day"){
+      const val = t.value === "" ? "" : parseInt(t.value, 10);
+      state[type][idx][field] = isNaN(val) ? "" : val;
+      saveState();
+      // odśwież, aby zachować sortowanie i highlight
+      if(type==='fuel') renderFuel(); else renderOther();
+      return;
+    }
+
+    state[type][idx][field] = t.value;
+    saveState();
+  });
+
+  // Usuwanie wierszy
+  document.addEventListener('click', (e)=>{
+    const t = e.target;
+    if(t.dataset && t.dataset.remove){
+      const arr = t.dataset.remove;
+      const i = parseInt(t.dataset.idx, 10);
+      state[arr].splice(i,1);
+      saveState();
+      if(arr==='fuel') renderFuel(); else renderOther();
+    }
+  });
+
+  // Nagłówek (nazwa/miesiąc/rok)
+  elName.addEventListener('input', ()=>{ state.name = elName.value; saveState(); renderHeader(); });
+  elYear.addEventListener('input', ()=>{ state.year = parseInt(elYear.value,10) || new Date().getFullYear(); saveState(); renderHeader(); });
+  elMonth.addEventListener('input', ()=>{ state.month = parseInt(elMonth.value,10); saveState(); renderHeader(); renderFuel(); renderOther(); });
+
+  // PDF
+  document.getElementById('btnPdf').addEventListener('click', ()=>window.print());
+
+  // Excel: jeden arkusz ze wspólną strukturą
+  document.getElementById('btnExcel').addEventListener('click', ()=>{
+    const rows = [["Typ","Dzień","Miejsce tankowania","Litry","Nazwa kosztu","Kwota (PLN)"]];
+    // paliwo
+    const fuelSorted = [...state.fuel]; sortByDay(fuelSorted,"day");
+    fuelSorted.forEach(r=>{
+      rows.push(["Paliwo", r.day ?? "", r.place ?? "", r.liters ?? "", "", r.amount ?? ""]);
+    });
+    // inne
+    const otherSorted = [...state.other]; sortByDay(otherSorted,"day");
+    otherSorted.forEach(r=>{
+      rows.push(["Inne", r.day ?? "", "", "", r.name ?? "", r.amount ?? ""]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Wydatki");
+    const m = String(state.month+1).padStart(2,'0');
+    XLSX.writeFile(wb, `Wydatki_${state.year}_${m}.xlsx`);
+  });
+
+  // Czyszczenie
+  document.getElementById('btnClear').addEventListener('click', ()=>{
+    if(confirm("Czy na pewno chcesz usunąć wszystkie zapisane dane?")){
+      localStorage.removeItem(LS_KEY);
+      state = {...stateDefault};
+      renderAll();
+    }
+  });
+
+  // Start
+  (function start(){
+    loadState();
+    renderAll();
+    const d=new Date();
+    document.getElementById("genDate").textContent =
+      `Wygenerowano: ${d.toLocaleDateString("pl-PL",{year:"numeric",month:"2-digit",day:"2-digit"})} ${d.toLocaleTimeString("pl-PL",{hour:"2-digit",minute:"2-digit"})}`;
+  })();
 </script>
 
-<!-- Service Worker -->
+<!-- Service Worker (PWA) -->
 <script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>console.log("Service Worker zarejestrowany"));
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(()=>console.log("Service Worker zarejestrowany"));
 }
 </script>
 </body>
