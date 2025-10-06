@@ -1,7 +1,8 @@
 {
   "name": "Wydatki miesięczne",
   "short_name": "Wydatki",
-  "start_url": "./",
+  "start_url": "/Wydatki-/",
+  "scope": "/Wydatki-/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0ea5e9",
